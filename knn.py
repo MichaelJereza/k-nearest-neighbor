@@ -27,17 +27,18 @@ def knn(train, testPoint, n):
         [
             getEuclideanDistanceForPoint(trainingPoint, testPoint)
             for trainingPoint in train
-        ]
+        ],
+        dtype=object
     );
 
     # Sort by the euclideanDistance value
     pointNeighborDistance = pointNeighborDistance[pointNeighborDistance[:,1].argsort()];
 
     # If test data has income, return the income
-    # if(len(testPoint == 87)):
-    #     pointNeighborDistance = [testPoint[:1][0], pointNeighborDistance, testPoint[-1:][0]];
-    # else:
-    pointNeighborDistance = [testPoint[:1][0], pointNeighborDistance];
+    if(len(testPoint == 87)):
+        pointNeighborDistance = [testPoint[:1][0], pointNeighborDistance, testPoint[-1:][0]];
+    else:
+        pointNeighborDistance = [testPoint[:1][0], pointNeighborDistance];
 
     pointNeighborDistance = numpy.asarray(pointNeighborDistance, dtype=object);
 
@@ -66,24 +67,32 @@ def fourFoldCrossValidation(k, allTrainingData):
         bottom = i * trainingSubsetLength;
         top = (i+1) * trainingSubsetLength;
 
-        trainingSubsets.append(allTrainingData[bottom:top])
+        if(i==3):
+            trainingSubsets.append(allTrainingData[bottom:]);
+        else:
+            trainingSubsets.append(allTrainingData[bottom:top]);
 
     # Convert to numpy array
-    trainingSubsets = numpy.asarray(trainingSubsets);
+    trainingSubsets = numpy.asarray(trainingSubsets, dtype=object);
 
     nearestNeighbors = [];
 
     for i in range(0, 4):
-        training = numpy.delete(trainingSubsets, i, axis=1);
+        training = numpy.delete(trainingSubsets, i);
         validation = trainingSubsets[i];
-        print("Training ", len(training[0]));
-        print(len(trainingSubsets[i]));
+        print("Training ", len(training[0])*3);
+        print("Validation ", len(validation));
+
 
         nearestNeighbors.append(getNearestNeighborsForTestingData(training, validation, k));
 
     nearestNeighbors = numpy.asarray(nearestNeighbors);
 
-    print(nearestNeighbors);
+    print("Results");
+    print("Folds", len(nearestNeighbors));
+    print("Fold Size", len(nearestNeighbors[0]));
+    print("Attributes per Test", len(nearestNeighbors[0][0]));
+    # print(nearestNeighbors[0][0])
 
     # print(numpy.array(nearestNeighbors)[0][1]);
 
