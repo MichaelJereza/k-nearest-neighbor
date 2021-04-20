@@ -3,10 +3,10 @@
 import numpy;
 
 def euclideanDistance(trainingVector, testVector):
-    # print("euclideanDistance trainingVector length:",len(trainingVector[0]));
+    # print("euclideanDistance trainingVector length:",len(trainingVector));
     # print("euclideanDistance testVector length:",len(testVector));
 
-    return numpy.linalg.norm(trainingVector[::,1:86] - testVector[1:86]);
+    return numpy.linalg.norm(trainingVector[1:86] - testVector[1:86]);
 
 def getEuclideanDistanceForPoint(trainingPoint, test):
     # print("OK")
@@ -18,12 +18,14 @@ def getEuclideanDistanceForPoint(trainingPoint, test):
     # Return the id, distance from the test point, and income for each training point
     return [trainingPoint[0], euclideanDistance(trainingPoint, test), trainingPoint[86]]
 
+knnRepeats = 0;
+
 def knn(train, testPoint, n):
 
     # print(len(train))
 
     # For each point in the training data get the euclideanDistance from the test point
-    pointNeighborDistance = numpy.array(
+    neighbors = numpy.array(
         [
             getEuclideanDistanceForPoint(trainingPoint, testPoint)
             for trainingPoint in train
@@ -31,25 +33,105 @@ def knn(train, testPoint, n):
         dtype=object
     );
 
-    # Sort by the euclideanDistance value
-    pointNeighborDistance = pointNeighborDistance[pointNeighborDistance[:,1].argsort()];
+
+    # trainingPointIds = train[::,0];
+
+    # trainnigPointIncomes = train[::,-1];
+
+    # print("=++++++++++++++++++=")
+    
+    # print("ID")
+    # print(len(trainingPointIds));
+    # print(trainingPointIds[-4]);
+
+    # print("euclidean Distance")
+    # print(len(pointNeighborDistance));
+    # print(pointNeighborDistance[-4]);
+
+    # print("Income")
+    # print(len(trainnigPointIncomes));
+    # print(trainnigPointIncomes[-4]);
+
+    # print(train)
+    # print(len(train))
+    # print(len(pointNeighborDistance))
+
+    # neighbors = numpy.hstack((trainingPointIds, pointNeighborDistance, trainnigPointIncomes));
+
+
+    # print("=-------------------=")
+
+    # print(len(neighbors));
+
+    # Sort neighbors by the euclideanDistance value
+    neighbors = neighbors[neighbors[:,1].argsort()];
+
+    # print("=-------------------=")
+    # print("Nearest Neighbor out of", len(neighbors));
+
+    # print("ID")
+    # print(neighbors[0][0]);
+
+    # print("euclidean Distance")
+    # print(neighbors[0][1]);
+
+    # print("Income")
+    # print(neighbors[0][2]);
+
+    # print("=zzzzzzzzzzzzzzzzzzz=")
+    
+    # print("ID")
+    # print(neighbors[-4][0]);
+
+    global knnRepeats;
+    knnRepeats += 1;
+    global totalTests;
+    print("Getting",n,"nearest neighbors for test point", knnRepeats, "/", totalTests, end="\r");
+
+    # print("euclidean Distance")
+    # print(len(neighbors[1]));
+    # print(neighbors[-4][1]);
+
+    # print("Income")
+    # print(len(neighbors[2]));
+    # print(neighbors[-4][2]);
+
+    # print("=++++++++++++++++++=")
 
     # If test data has income, return the income
     if(len(testPoint == 87)):
-        pointNeighborDistance = [testPoint[:1][0], pointNeighborDistance, testPoint[-1:][0]];
+        pointNeighborDistance = [
+            testPoint[:1][0],  # test point ID
+            neighbors, # neighbors [trainingID, distance, income]
+            testPoint[-1:][0]
+        ];
     else:
-        pointNeighborDistance = [testPoint[:1][0], pointNeighborDistance];
+        pointNeighborDistance = [
+            testPoint[:1][0], 
+            neighbors
+        ];
 
     pointNeighborDistance = numpy.asarray(pointNeighborDistance, dtype=object);
+
+
+    # print("Attached ID and income?")
+
+    # print(len(pointNeighborDistance))
+    # print(pointNeighborDistance)
+
 
     return pointNeighborDistance;
 
 
 def getNearestNeighborsForTestingData(train, test, k):
     
-    # print("Training", len(train))
-    # print("Testing", len(test))
-
+    print("Training", len(train))
+    print("Testing", len(test))
+    print();
+    global knnRepeats;
+    knnRepeats = 0;
+    global totalTests;
+    totalTests = len(test);
 
     return numpy.array(
         [knn(train, testPoint, k) for testPoint in test]
@@ -80,18 +162,40 @@ def fourFoldCrossValidation(k, allTrainingData):
     for i in range(0, 4):
         training = numpy.delete(trainingSubsets, i);
         validation = trainingSubsets[i];
-        print("Training ", len(training[0])*3);
-        print("Validation ", len(validation));
 
+        
+        training = numpy.concatenate(training);
+
+        print("Getting neighbors for fold", i+1);
+        print("Training on section length", len(training[0]), len(training[1]), len(training[2]))
+        print("Training Set Length", len(training));
+        print("Validation Set Length", len(validation));
+        print("First trainingPoint ID:", training[0][0]);
+        print("Last trainingPoint ID:", training[-1][0]);
 
         nearestNeighbors.append(getNearestNeighborsForTestingData(training, validation, k));
+        print("====================================");
 
-    nearestNeighbors = numpy.asarray(nearestNeighbors);
+
+    nearestNeighbors = numpy.asarray(nearestNeighbors, dtype=object);
 
     print("Results");
     print("Folds", len(nearestNeighbors));
     print("Fold Size", len(nearestNeighbors[0]));
     print("Attributes per Test", len(nearestNeighbors[0][0]));
+
+    return nearestNeighbors;
+    # For each fold
+        # For each test point
+            # For each nearest neighbors
+                # if neighbor.income = test.income
+                    # +1
+                # else
+                    # 0
+            # accuracy = score/neighbors
+        # average accuracy per fold
+    # average accuracy over all folds
+
     # print(nearestNeighbors[0][0])
 
     # print(numpy.array(nearestNeighbors)[0][1]);
