@@ -139,7 +139,7 @@ def getNearestNeighborsForTestingData(train, test, k):
 
 def fourFoldCrossValidation(k, allTrainingData):
 
-    trainingSubsetLength = int(numpy.floor(len(allTrainingData)/4));
+    trainingSubsetLength = int(len(allTrainingData)/4);
     # print("training length", trainingLength);
 
     trainingSubsets = [];
@@ -160,14 +160,14 @@ def fourFoldCrossValidation(k, allTrainingData):
     nearestNeighbors = [];
 
     for i in range(0, 4):
-        training = numpy.delete(trainingSubsets, i);
+        training = numpy.delete(trainingSubsets, i, 0);
         validation = trainingSubsets[i];
 
+        print("Training on section length", len(training[0]), len(training[1]), len(training[2]))
         
         training = numpy.concatenate(training);
 
         print("Getting neighbors for fold", i+1);
-        print("Training on section length", len(training[0]), len(training[1]), len(training[2]))
         print("Training Set Length", len(training));
         print("Validation Set Length", len(validation));
         print("First trainingPoint ID:", training[0][0]);
@@ -200,15 +200,30 @@ def fourFoldCrossValidation(k, allTrainingData):
 
     # print(numpy.array(nearestNeighbors)[0][1]);
 
+def getTestAccuracy(test):
+    print(len(test[1]))
+
+def getAveragesForFolds(fold):
+    foldTestAverages = nump.array([getTestAccuracy(test) for test in fold])
+
 def getAccuracyForNearestNeighborData(neighborData):
     # [[testID, [[trainID, distance, income]...], income?]]
 
-    print(neighborData);
+    print("Processing data...");
 
-    # numpy.array(
-        # [knn(train, testPoint, k) for testPoint in testData]
-        # [for neighbor>]
-    # )?
+    numpy.sum(nump.array([getAveragesForFolds(fold) for fold in neighborData]))
+
+    print(len(neighborData));
+
+    i = 0;
+
+    for fold in neighborData:
+        for testPoint in fold:
+            for neighbor in testPoint[::,1]:
+                i+=1;
+
+    print(i, "total neighbors");
+    
 
 
 def importData(filename):
@@ -235,7 +250,7 @@ def main():
 
     # print(nearestNeighbors);
 
-    fourFoldCrossValidation(5, trainingData);
+    fourFoldCrossValidation(5, trainingData[:97]);
 
 
 if __name__ == "__main__":
