@@ -2,20 +2,14 @@
 
 import numpy;
 from scipy import stats;
+import sys;
 
 def euclideanDistance(trainingVector, testVector):
-    # print("euclideanDistance trainingVector length:",len(trainingVector));
-    # print("euclideanDistance testVector length:",len(testVector));
 
     return numpy.linalg.norm(trainingVector[1:86] - testVector[1:86]);
 
 def getEuclideanDistanceForPoint(trainingPoint, test):
-    # print("OK")
 
-    # print("Test", test[0]);
-    # print("Train", trainingPoint[0]);
-    # print(test);
-    # import sys; sys.exit(1);
     # Return the id, distance from the test point, and income for each training point
     return [trainingPoint[0], euclideanDistance(trainingPoint, test), trainingPoint[86]]
 
@@ -39,7 +33,7 @@ def knn(train, testPoint, k):
     global knnRepeats;
     knnRepeats += 1;
     global totalTests;
-    print("Getting",len(neighbors),"nearest neighbors for test point", knnRepeats, "/", totalTests, "\t\t", end="\r");
+    print("Getting",len(neighbors),"nearest neighbors for test point", knnRepeats, "/", totalTests, "    ", end="\r");
 
     # If test data has income, return the income
     if(len(testPoint == 87)):
@@ -61,15 +55,15 @@ def knn(train, testPoint, k):
 
 def getNearestNeighborsForTestingData(train, test, k):
     
-    # print("Training", len(train))
-    # print("Testing", len(test))
-    # print();
-    # print(k);
-
     global knnRepeats;
     knnRepeats = 0;
     global totalTests;
     totalTests = len(test);
+
+
+    print(len(train));
+    print("TRAININGS")
+
 
     return numpy.array(
         [knn(train, testPoint, k) for testPoint in test]
@@ -78,9 +72,6 @@ def getNearestNeighborsForTestingData(train, test, k):
 def fourFoldCrossValidation(k, allTrainingData):
 
     trainingSubsetLength = int(len(allTrainingData)/4);
-    # print("training length", trainingLength);
-
-    # if(k > trainingSubsetLength):
 
     trainingSubsets = [];
 
@@ -110,6 +101,7 @@ def fourFoldCrossValidation(k, allTrainingData):
         # print("Getting neighbors for fold", i+1);
         # print("Training Set Length", len(training));
         # print("Validation Set Length", len(validation));
+        # print(len(trainingSubsets[i]))
         # print("First trainingPoint ID:", training[0][0]);
         # print("Last trainingPoint ID:", training[-1][0]);
         # print("====================================");
@@ -120,31 +112,36 @@ def fourFoldCrossValidation(k, allTrainingData):
     nearestNeighbors = numpy.asarray(nearestNeighbors, dtype=object);
 
     print("\nRESULTS");
+    
     print("Folds", len(nearestNeighbors));
+    
     print("Fold Size", len(nearestNeighbors[0]));
-    # print("Attributes per Test", len(nearestNeighbors[0][0]));
 
     return nearestNeighbors;
 
 def checkCorrectClassification(neighbor, classification):
+
     if(neighbor[2] == classification):
+
         return 1;
+
     else:
+
         return 0;
 
 def getTestAccuracy(test):
-    # print(len(test[1]))
-    # print("Checking", test[0], "for income matching", test[2])
-    # print(test[-2])
     accuratePredictions = numpy.array([
+
         checkCorrectClassification(neighbor, test[2]) for neighbor in test[1]
+
     ])
 
     return numpy.sum(accuratePredictions)/len(test[1])
 
 def getAveragesForFold(fold):
+
     foldTestAverages = numpy.array([getTestAccuracy(test) for test in fold])
-    # print(foldTestAverages);
+
     return numpy.average(foldTestAverages);
 
 def getAccuracyForNearestNeighborData(k, neighborData):
@@ -155,27 +152,36 @@ def getAccuracyForNearestNeighborData(k, neighborData):
     foldAverages = numpy.array([getAveragesForFold(fold) for fold in neighborData])
 
     kAverage = numpy.average(foldAverages);
+    
     kVariance = numpy.var(foldAverages);
 
     print("ACCURACY")
+    
     print("Mean:", kAverage);
+    
     print("Variance", kVariance);
 
-    # print(foldAverages);
     return (k, kAverage, kVariance);    
 
 
 def importData(filename):
-    my_data = numpy.genfromtxt(filename, delimiter=',', skip_header=1, skip_footer=1);
+    my_data = numpy.genfromtxt(filename, delimiter=',', skip_header=1);
+    
     print("Data Loaded.");
+    
     print("Dimensions:\t", len(my_data[0]));
+    
     print("Data points:\t", len(my_data));
+
     print("=====================");
+    
     return my_data
 
 def testKValueAccuracy(k, trainingData):
     print("\nChecking accuracy for k =",k);
+    
     nn = fourFoldCrossValidation(k, trainingData);
+    
     return getAccuracyForNearestNeighborData(k, nn);
 
 def determineBestK(kValues, trainingData):
@@ -185,16 +191,16 @@ def determineBestK(kValues, trainingData):
 
     bestMeans = numpy.sort(accuracyForKs, order="mean")[::-1]
         
-    # print(numpy.array(bestMeans[:,:1] - bestMeans[:,:1]))
     displayAccuracies(bestMeans, bestVars);
 
-    # kValues = [];
-
     score = 0;
+    
     bestFittingK = -1;
 
     for mean in range(len(bestMeans)):
+        
         for variance in range(len(bestVars)):
+            
             if(bestMeans[mean][0]==bestVars[variance][0]):
 
                 # Get the index of the mean and variance which is where it ranked in the sorted array
@@ -202,30 +208,33 @@ def determineBestK(kValues, trainingData):
                 
                 # If the mean and variance are better than the current pick replace it
                 if(thisScore < score or score == 0):
+                
                     bestFittingK = bestMeans[mean][0];
+                
                     score = thisScore;
                 
-
-
-    # import sys; sys.exit(1);
-
     return bestFittingK;
 
 def displayAccuracies(means, vars):
+    
     print("\n\t==Mean==\t==Variance==")
+    
     for i in range(len(means)):
+    
         print(i+1,"\t", "k=",means[i][0], end="\t\t\t")
+    
         print( "k=",vars[i][0]);
     
     print();
 
 def getTestPredictions(nearestNeighborsForPoint):
-    # print((nearestNeighborsForPoint[1])[:,2]);
+
     bestGuess = stats.mode((nearestNeighborsForPoint[1])[:,2])[0][0];
-    # print(bestGuess);
+
     return (int(nearestNeighborsForPoint[0]), int(bestGuess));
 
 def main():
+
     # Remove income column
     trainingData = importData("train.csv");
 
@@ -233,19 +242,17 @@ def main():
     
     testKs = [1,3,5,7,9,99,999,8000];
 
-    # nearestNeighbors = getNearestNeighborsForTestingData(trainingData, testingData[:5], k);
-
-    # getAccuracyForNearestNeighborData(nearestNeighbors);
-
-    # print(nearestNeighbors);
+    # DETERMINE BEST K
     bestK = determineBestK(testKs, trainingData);
-  
+
+    # GET TEST DATA NEIGHBORS
     testDataNeighbors = getNearestNeighborsForTestingData(trainingData, testingData, bestK);
 
     print();
 
-    print(bestK);
+    print("Best K:", bestK);
 
+    # DETERMINE INCOME BASED ON NEIGHBORS
     predictions = numpy.array(
         [
             getTestPredictions(neighbors) for neighbors in testDataNeighbors
