@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy;
+from scipy import stats;
 
 def euclideanDistance(trainingVector, testVector):
     # print("euclideanDistance trainingVector length:",len(trainingVector));
@@ -218,6 +219,12 @@ def displayAccuracies(means, vars):
     
     print();
 
+def getTestPredictions(nearestNeighborsForPoint):
+    # print((nearestNeighborsForPoint[1])[:,2]);
+    bestGuess = stats.mode((nearestNeighborsForPoint[1])[:,2])[0][0];
+    # print(bestGuess);
+    return (int(nearestNeighborsForPoint[0]), int(bestGuess));
+
 def main():
     # Remove income column
     trainingData = importData("train.csv");
@@ -231,10 +238,26 @@ def main():
     # getAccuracyForNearestNeighborData(nearestNeighbors);
 
     # print(nearestNeighbors);
-    bestK = determineBestK(testKs, trainingData[:100]);
+    bestK = determineBestK(testKs, trainingData);
   
+    testDataNeighbors = getNearestNeighborsForTestingData(trainingData, testingData, bestK);
+
+    print();
+
     print(bestK);
 
-# numpy.savetxt("foo.csv", a, delimiter=",")
+    predictions = numpy.array(
+        [
+            getTestPredictions(neighbors) for neighbors in testDataNeighbors
+        ]
+    )
+
+    print(predictions);
+
+    with open("guesses.csv", "wb") as f:
+        f.write(b'id,income\n')
+        numpy.savetxt(f, predictions.astype(int), fmt='%i', delimiter=",")
+        f.close()
+
 if __name__ == "__main__":
     main()
